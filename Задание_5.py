@@ -2,23 +2,56 @@ from tkinter import *
 from tkinter import messagebox as mb
 from tkinter import ttk
 import requests
+from tkmacosx import Button  # спец библиотека, которая обходит ограничения macOS, ставит любой цвет фона у кнопки
 
 
 
 def update_currency_label(event):
-    pass
+    code = target_combobox.get()
+    name = currencies[code]
+    target_label.config(text=name)
 
 
 def update_base_label(event):
-    pass
+    code = base_combobox.get()
+    name = currencies[code]
+    base_label.config(text=name)
 
 
 def update_base2_label(event):
-    pass
+    code = base2_combobox.get()
+    name = currencies[code]
+    base2_label.config(text=name)
 
 
 def exchange():
-    pass
+    target_code = target_combobox.get().strip()
+    base_code = base_combobox.get().strip()
+    base2_code = base2_combobox.get().strip()
+    if target_code and base_code and base2_code:
+        try:
+            response1 = requests.get(f'https://open.er-api.com/v6/latest/{base_code}')
+            response1.raise_for_status()
+            data1 = response1.json()
+            response2 = requests.get(f'https://open.er-api.com/v6/latest/{base2_code}')
+            response2.raise_for_status()
+            data2 = response2.json()
+            if target_code in data1['rates'] and target_code in data2['rates']:
+                exchange_rate = data1['rates'][target_code]
+                exchange_rate2 = data2['rates'][target_code]
+                base = currencies[base_code]
+                base2 = currencies[base2_code]
+                target = currencies[target_code]
+                mb.showinfo('Курс обмена',
+                            f'Курс: {exchange_rate:.1f} {target} за 1 {base}\n'
+                                     f'Курс: {exchange_rate2:.1f} {target} за 1 {base2}')
+            else:
+                mb.showerror('Ошибка',
+                             f'Валюта {target_code} не найдена')
+        except Exception as er:
+            mb.showerror('Ошибка', f'Ошибка: {er}')
+    else:
+        mb.showwarning('Внимание', 'Введите коды валют')
 
 
 currencies = {
@@ -60,7 +93,7 @@ target_combobox.bind('<<ComboboxSelected>>', update_currency_label)
 target_label = ttk.Label(root)
 target_label.pack()
 
-Button(root, text='Получить курс обмена',
+Button(root, text='Получить курс обмена', bg='#467ef0', fg='white',
        command=exchange).pack(pady=10, padx=10)
 
 root.mainloop()
